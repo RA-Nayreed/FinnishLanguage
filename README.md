@@ -87,18 +87,26 @@ intentionally fake. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
 `ELEVENLABS_MODEL`, `ELEVENLABS_STABILITY`, `ELEVENLABS_SIMILARITY_BOOST`,
 `ELEVENLABS_STYLE`, and `ELEVENLABS_SPEAKER_BOOST`.
 
-To generate static audio locally from the deployed TTS API:
+To generate static audio locally from the deployed TTS API, use the one-phrase-per-request generator:
 
 ```bash
 TTS_API_URL=https://finnishlanguage.vercel.app/api/tts node scripts/pregenerate-audio.mjs
+```
+
+For fewer API requests, use the batched timestamp generator. It requires
+`ffmpeg` and uses `/api/tts-timestamps` while the temporary API is still
+deployed:
+
+```bash
+TTS_TIMESTAMPS_API_URL=https://finnishlanguage.vercel.app/api/tts-timestamps node scripts/batch-generate-audio.mjs
 ```
 
 For a small test run that writes outside the repo:
 
 ```bash
 AUDIO_OUT_DIR=/tmp/sf-audio-test PREGEN_LIMIT=3 \
-  TTS_API_URL=https://finnishlanguage.vercel.app/api/tts \
-  node scripts/pregenerate-audio.mjs
+  TTS_TIMESTAMPS_API_URL=https://finnishlanguage.vercel.app/api/tts-timestamps \
+  node scripts/batch-generate-audio.mjs
 ```
 
 You can also set `ELEVENLABS_API_KEY` locally and render directly. Without
@@ -112,7 +120,7 @@ The API can be used as a temporary generator and then removed after the MP3
 library is committed. The safe sequence is:
 
 1. Keep `/api/tts` deployed and working.
-2. Generate files locally with `TTS_API_URL=https://finnishlanguage.vercel.app/api/tts node scripts/pregenerate-audio.mjs`.
+2. Generate files locally with `TTS_TIMESTAMPS_API_URL=https://finnishlanguage.vercel.app/api/tts-timestamps node scripts/batch-generate-audio.mjs`.
 3. Commit `frontend/audio/manifest.json` and `frontend/audio/*.mp3`.
 4. Switch `frontend/js/config.js` to disable live TTS, then remove `api/` and the Vercel `ELEVENLABS_API_KEY`.
 
@@ -128,11 +136,12 @@ The root `vercel.json` is configured for the static frontend:
 - Framework: none
 - Build command: `node scripts/pregenerate-audio.mjs`
 - Output directory: `frontend`
-- Serverless API routes: `api/health.js`, `api/tts.js`, `api/voices.js`
+- Serverless API routes: `api/health.js`, `api/tts.js`, `api/tts-timestamps.js`, `api/voices.js`
 
-On Vercel, the build writes an empty audio manifest by default and uses live
-`/api/tts` playback. Set `PREGENERATE_AUDIO=true` only if you intentionally
-want the build to spend ElevenLabs quota generating static MP3 files.
+On Vercel, the build preserves the committed audio manifest by default and uses
+committed MP3 files plus live `/api/tts` fallback if configured. Set
+`PREGENERATE_AUDIO=true` only if you intentionally want the build to spend
+ElevenLabs quota generating static MP3 files.
 
 Import the GitHub repository into Vercel and keep the production branch set to
 `main`. Add a real `ELEVENLABS_API_KEY` as a Vercel environment variable for

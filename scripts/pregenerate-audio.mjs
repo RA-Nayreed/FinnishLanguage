@@ -151,9 +151,10 @@ async function main() {
   fs.mkdirSync(AUDIO_DIR, { recursive: true });
 
   if (process.env.VERCEL && process.env.PREGENERATE_AUDIO !== 'true') {
-    console.warn('! PREGENERATE_AUDIO is not true, writing an empty manifest.');
-    console.warn('  Vercel will use live /api/tts audio instead of build-time MP3 generation.');
-    fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
+    const manifestPath = path.join(AUDIO_DIR, 'manifest.json');
+    console.warn('! PREGENERATE_AUDIO is not true, preserving committed audio manifest.');
+    console.warn('  Vercel will use committed MP3 files plus live /api/tts fallback if configured.');
+    if (!fs.existsSync(manifestPath)) fs.writeFileSync(manifestPath, '[]');
     return;
   }
 
