@@ -380,6 +380,9 @@ function renderHome() {
       '<input type="checkbox" ' + (S.tasks[t[0]] ? 'checked' : '') + ' onchange="S.tasks[\'' + t[0] + '\']=this.checked;save();">' +
       '<span>' + t[1] + '</span></label>';
   }).join('');
+  var golden = GOLDEN_RULES.map(function (g, i) {
+    return '<div class="vrow"><b>' + (i + 1) + '.</b><span style="text-align:left">' + esc(g) + '</span></div>';
+  }).join('');
   $('#app').innerHTML =
   '<div class="col" style="margin-top:64px">' +
     '<p class="caption mute" style="font-family:var(--mono)">900017Y · 2 op · A1.1 · University of Oulu</p>' +
@@ -395,8 +398,11 @@ function renderHome() {
   '</div>' +
   '<div class="col section-gap">' +
     '<h2 class="display-lg">Kurssi-info</h2>' +
-    '<div class="faq-row"><h5 class="heading-sm">Mikä kurssi tämä on?</h5><p>Survival Finnish (900017Y), 2 ECTS ≈ 50 h of work, level A1.1. Evaluation: pass / fail. Attend the lessons, do the exercises and the four obligatory Moodle tasks.</p></div>' +
-    '<div class="faq-row"><h5 class="heading-sm">Kultainen sääntö — the golden rule</h5><p>Finnish is pronounced exactly as it is written — one letter, one sound, always. Stress is always on the first syllable, and sound length (a vs aa, k vs kk) changes the meaning of the word, so listen and pronounce carefully.</p></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Learning outcomes</h5><p>By the end of the course, you can understand and use very common everyday expressions and phrases, locate information in simple texts and messages, and recognize basic features of Finnish language and communication styles.</p></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Mode, workload and assessment</h5><p>Survival Finnish (900017Y), 2 ECTS, level A1.1. The booklet describes 12 x 2 h contact lessons, a 2 h written exam, and 24 h of self-study in Moodle. Assessment is pass/fail and is based on active participation, homework assignments, and the written exam.</p></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Course content</h5><p>Everyday phrases, greetings, thanking and apologizing, introductions and basic personal information, numbers, time expressions, food and drink, asking prices, personal pronouns and possessive forms, affirmative/negative/question sentences, verb conjugation, partitive singular, and basic local cases for answering missä.</p></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Kultaiset säännöt — golden rules</h5><div class="vgrid" style="grid-template-columns:1fr">' + golden + '</div></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Pronunciation rule</h5><p>Finnish is pronounced exactly as it is written: one letter, one sound. Stress is always on the first syllable, and sound length (a vs aa, k vs kk) changes meaning, so listen and pronounce carefully.</p></div>' +
     '<div class="faq-row"><h5 class="heading-sm">Pakolliset Moodle-tehtävät — obligatory tasks</h5>' + tasks + '</div>' +
   '</div>' +
   '<div class="col section-gap">' +

@@ -3,41 +3,86 @@
  *
  * Three-tier playback (best available wins):
  *   1) pre-generated MP3  audio/<hash>.mp3   (listed in audio/manifest.json)
- *   2) live ElevenLabs via the backend        GET {apiBase}/api/tts?text=...
- *   3) browser SpeechSynthesis (fi-FI)         — offline fallback
- *
- * Exposes globals used throughout the app:
- *   say(text)   -> plays the phrase
- *   spk(text)   -> returns a small 🔊 button that calls say(text)
- *   ttsOK       -> true when *some* audio path is expected to work
+ *   2) live ElevenLabs via /api/tts or a configured backend
+ *   3) browser SpeechSynthesis (fi-FI)       — final fallback
  * ==========================================================================*/
 (function () {
   'use strict';
 
   var CFG = window.SF_CONFIG || {};
-  var API = (CFG.apiBase || '').replace(/\/+$/, '');
+  var rawApiBase = CFG.apiBase == null ? 'auto' : String(CFG.apiBase).trim();
   var AUDIO_BASE = (CFG.audioBase || 'audio').replace(/\/+$/, '');
-  var FALLBACK_RATE = typeof CFG.fallbackRate === 'number' ? CFG.fallbackRate : 0.9;
+  var FALLBACK_RATE = typeof CFG.fallbackRate === 'number' ? CFG.fallbackRate : 0.86;
+  var FALLBACK_PITCH = typeof CFG.fallbackPitch === 'number' ? CFG.fallbackPitch : 1;
 
   var hasSpeech = ('speechSynthesis' in window);
-  var manifest = new Set();          // set of pre-generated phrase hashes
+  var manifest = new Set();
   var manifestLoaded = false;
-  var audioEl = null;                // reusable <audio> element for files
-  var cache = {};                    // hash -> object URL (backend responses)
+  var backendMode = 'disabled';
+  var apiCandidate = '';
+  var API = '';
+  var audioEl = null;
+  var cache = {};
+
+  if (rawApiBase === 'auto') {
+    backendMode = 'auto';
+    apiCandidate = /^https?:$/i.test(window.location.protocol) ? window.location.origin : '';
+  } else if (rawApiBase) {
+    backendMode = 'explicit';
+    API = rawApiBase.replace(/\/+$/, '');
+  }
 
   /* ---- browser voice selection ------------------------------------------*/
   var fiVoice = null;
+  var selectedVoiceName = '';
+  try { selectedVoiceName = window.localStorage.getItem('sf-browser-voice') || ''; } catch (e) {}
+
+  function voiceScore(v) {
+    var lang = String(v.lang || '');
+    var name = String(v.name || '');
+    var score = 0;
+    if (/^fi([-_]FI)?$/i.test(lang)) score += 100;
+    else if (/^fi([-_]|$)/i.test(lang)) score += 90;
+    if (/finnish|suomi|satu|heidi|harri/i.test(name)) score += 30;
+    if (/natural|premium|enhanced|neural|online|google|microsoft/i.test(name)) score += 10;
+    if (v.localService) score += 2;
+    return score;
+  }
+
   function pickVoice() {
     if (!hasSpeech) return;
     try {
       var vs = window.speechSynthesis.getVoices() || [];
-      fiVoice = vs.find(function (v) { return /^fi(\b|[-_])/i.test(v.lang); }) ||
-                vs.find(function (v) { return /finnish|suomi/i.test(v.name || ''); }) || null;
+      if (!vs.length) return;
+      if (selectedVoiceName) {
+        fiVoice = vs.find(function (v) { return v.name === selectedVoiceName; }) || null;
+        if (fiVoice) return;
+      }
+      var ranked = vs.slice().sort(function (a, b) { return voiceScore(b) - voiceScore(a); });
+      fiVoice = voiceScore(ranked[0]) > 0 ? ranked[0] : null;
     } catch (e) { /* ignore */ }
   }
   if (hasSpeech) {
     pickVoice();
     try { window.speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+  }
+
+  function listBrowserVoices() {
+    if (!hasSpeech) return [];
+    try {
+      return (window.speechSynthesis.getVoices() || []).map(function (v) {
+        return { name:v.name, lang:v.lang, localService:!!v.localService, score:voiceScore(v) };
+      }).sort(function (a, b) { return b.score - a.score; });
+    } catch (e) { return []; }
+  }
+
+  function setBrowserVoice(name) {
+    selectedVoiceName = String(name || '');
+    try {
+      if (selectedVoiceName) window.localStorage.setItem('sf-browser-voice', selectedVoiceName);
+      else window.localStorage.removeItem('sf-browser-voice');
+    } catch (e) {}
+    pickVoice();
   }
 
   function browserSay(text) {
@@ -48,6 +93,7 @@
       u.lang = 'fi-FI';
       if (fiVoice) u.voice = fiVoice;
       u.rate = FALLBACK_RATE;
+      u.pitch = FALLBACK_PITCH;
       window.speechSynthesis.speak(u);
       return true;
     } catch (e) { return false; }
@@ -84,8 +130,23 @@
       .catch(function () { manifestLoaded = true; });
   }
 
-  /* ---- backend (ElevenLabs proxy) ---------------------------------------*/
+  /* ---- backend / Vercel API discovery -----------------------------------*/
+  function probeBackend() {
+    if (backendMode !== 'auto' || !apiCandidate) return Promise.resolve(false);
+    return fetch(apiCandidate + '/api/health', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.ok && data.keyConfigured) {
+          API = apiCandidate;
+          return true;
+        }
+        return false;
+      })
+      .catch(function () { return false; });
+  }
+
   function backendSay(text, hash) {
+    if (!API) return Promise.reject(new Error('no backend'));
     if (cache[hash]) return playUrl(cache[hash]);
     var url = API + '/api/tts?text=' + encodeURIComponent(text);
     return fetch(url)
@@ -105,7 +166,6 @@
     if (!text) return;
     var hash = window.Lingua ? window.Lingua.hashPhrase(text) : String(text);
 
-    // 1) pre-generated file
     if (manifest.has(hash)) {
       playUrl(AUDIO_BASE + '/' + hash + '.mp3').catch(function () {
         tryBackendThenBrowser(text, hash);
@@ -123,7 +183,7 @@
     }
   }
 
-  /* ---- 🔊 button builder -------------------------------------------------*/
+  /* ---- button builder ----------------------------------------------------*/
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -135,13 +195,28 @@
            'onclick="say(\'' + safe + '\')">🔊</button>';
   }
 
-  /* Audio is considered available if any of the three tiers can plausibly
-   * produce sound. Pre-generated audio (audioBase) is assumed possible. */
-  var TTS_OK = hasSpeech || !!API || !!AUDIO_BASE;
+  function status() {
+    return {
+      manifestLoaded: manifestLoaded,
+      pregeneratedPhrases: manifest.size,
+      backendMode: backendMode,
+      apiBase: API,
+      browserSpeech: hasSpeech,
+      browserVoice: fiVoice ? { name:fiVoice.name, lang:fiVoice.lang, score:voiceScore(fiVoice) } : null
+    };
+  }
 
-  /* ---- expose ------------------------------------------------------------*/
+  var TTS_OK = hasSpeech || !!API || backendMode === 'auto' || !!AUDIO_BASE;
+
   window.say = say;
   window.spk = spk;
-  window.ttsOK = TTS_OK;                 // legacy name used across the app
-  window.AudioFX = { init: loadManifest, say: say, isReady: function () { return manifestLoaded; } };
+  window.ttsOK = TTS_OK;
+  window.AudioFX = {
+    init: function () { return Promise.all([loadManifest(), probeBackend()]); },
+    say: say,
+    isReady: function () { return manifestLoaded; },
+    status: status,
+    listBrowserVoices: listBrowserVoices,
+    setBrowserVoice: setBrowserVoice
+  };
 })();

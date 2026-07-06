@@ -16,6 +16,7 @@ This repository is a personal study tool.
 - `scripts/pregenerate-audio.mjs` can render known Finnish phrases into MP3
   files for static hosting.
 - `vercel.json` deploys the static frontend directory on Vercel.
+- `api/` contains Vercel serverless routes for optional ElevenLabs speech.
 
 ## Project Layout
 
@@ -36,6 +37,10 @@ backend/
   .env.example
 scripts/
   pregenerate-audio.mjs
+api/
+  health.js
+  tts.js
+  voices.js
 vercel.json
 ```
 
@@ -68,8 +73,16 @@ Speech playback tries these sources in order:
 
 1. Generated files from `frontend/audio/<hash>.mp3` listed in
    `frontend/audio/manifest.json`.
-2. The optional backend when `frontend/js/config.js` has `apiBase` set.
-3. Browser speech synthesis as an offline fallback.
+2. ElevenLabs through same-origin Vercel routes (`api/tts.js`) when
+   `ELEVENLABS_API_KEY` is configured, or through a custom backend when
+   `frontend/js/config.js` points `apiBase` at one.
+3. Browser speech synthesis as the final offline fallback.
+
+The browser fallback can sound rough if the user has no Finnish system voice.
+For production-quality speech on Vercel, set `ELEVENLABS_API_KEY` in the Vercel
+project environment. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
+`ELEVENLABS_MODEL`, `ELEVENLABS_STABILITY`, `ELEVENLABS_SIMILARITY_BOOST`,
+`ELEVENLABS_STYLE`, and `ELEVENLABS_SPEAKER_BOOST`.
 
 To generate static audio locally:
 
@@ -88,11 +101,13 @@ The root `vercel.json` is configured for the static frontend:
 - Framework: none
 - Build command: `node scripts/pregenerate-audio.mjs`
 - Output directory: `frontend`
+- Serverless API routes: `api/health.js`, `api/tts.js`, `api/voices.js`
 
 Import the GitHub repository into Vercel and keep the production branch set to
-`main`. Add `ELEVENLABS_API_KEY` as a Vercel environment variable only if you
-want MP3 files generated during deployment; otherwise the app deploys and uses
-fallback audio.
+`main`. Add `ELEVENLABS_API_KEY` as a Vercel environment variable for better
+speech. With the key, the app can synthesize live phrases through `/api/tts` and
+can also pre-generate static MP3 files at build time. Without the key, the app
+still deploys and uses browser fallback audio.
 
 CLI deployment:
 

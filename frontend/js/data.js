@@ -82,6 +82,14 @@ ${tbl(null,[
 <p>Tap a letter to hear its Finnish name.</p>
 <div class="alpha-grid">${ALPHA.map(function(a){return '<button class="alpha-cell" onclick="say(\''+a[1]+'\')"><b>'+a[0]+'</b><span>'+a[1]+'</span></button>';}).join('')}</div>
 <div class="note"><b>Spelling your name:</b> ”Minun nimi kirjoitetaan <i>aa, än, än, aa</i>.” (= A-N-N-A) — Miten sinun nimi kirjoitetaan?</div>`},
+{h:'Name spelling practice',body:`
+<p>The booklet asks you to spell Finnish names aloud with a partner. Use the alphabet names above: <b>Jarkko</b> = jii-aa-är-koo-koo-oo.</p>
+${tbl(['Name group','Names'],[
+['Short names','Jarkko · Mira · Olli · Aino · Lotta · Tero'],
+['Longer names','Marjatta · Kauko · Antti · Heli · Eija · Tuomo'],
+['More practice','Jani · Mikko · Siiri · Tuulikki · Jussi · Ritva'],
+['Ä / Ö practice','Emma · Päivi · Yrjö · Esa · Virve · Säde']])}
+<div class="note"><b>Partner prompt:</b> Kerro parillesi, miten seuraavat nimet kirjoitetaan. Choose a name, spell it, and switch turns.</div>`},
 {h:'Pronunciation rules',body:`
 <p><b>1. Finnish is phonetic.</b> Each letter = one sound, always pronounced the same way.</p>
 <p><b>2. Short vs. long sounds change the meaning.</b></p>
@@ -132,6 +140,15 @@ practice:[
  {q:'Mitkä ovat Suomen lipun värit?',o:['valkoinen ja sininen','punainen ja keltainen','valkoinen ja punainen','sininen ja musta'],a:0},
  {q:'Montako asukasta Oulussa on?',o:['noin 200 000','noin 600 000','noin 50 000','noin miljoona'],a:0},
  {q:'Millainen sää on talvella?',o:['melko kylmä, sataa lunta','kuuma','lämmin ja aurinkoinen','sataa vettä koko ajan'],a:0}]},
+{id:'p0e',title:'Miten nimi kirjoitetaan? — spell Finnish names',type:'mc',items:[
+ {q:'Jarkko kirjoitetaan…',o:['jii-aa-är-koo-koo-oo','jii-aa-är-koo-oo','jii-aa-är-see-koo-oo','jii-aa-äl-koo-koo-oo'],a:0},
+ {q:'Aino kirjoitetaan…',o:['aa-ii-än-oo','aa-ii-äm-oo','aa-jii-än-oo','aa-ii-än-öö'],a:0},
+ {q:'Eija kirjoitetaan…',o:['ee-ii-jii-aa','ee-jii-aa','ee-ii-gee-aa','ee-ii-jii-ää'],a:0},
+ {q:'Päivi kirjoitetaan…',o:['pee-ää-ii-vee-ii','pee-aa-ii-vee-ii','pee-ää-jii-vee-ii','pee-ää-ii-wee-ii'],a:0},
+ {q:'Yrjö kirjoitetaan…',o:['yy-är-jii-öö','yy-är-gee-öö','uu-är-jii-öö','yy-äl-jii-öö'],a:0},
+ {q:'Säde kirjoitetaan…',o:['äs-ää-dee-ee','äs-aa-dee-ee','see-ää-dee-ee','äs-ää-tee-ee'],a:0},
+ {q:'Mikko kirjoitetaan…',o:['äm-ii-koo-koo-oo','äm-ii-koo-oo','äm-jii-koo-koo-oo','än-ii-koo-koo-oo'],a:0},
+ {q:'Tuulikki kirjoitetaan…',o:['tee-uu-uu-äl-ii-koo-koo-ii','tee-uu-äl-ii-koo-koo-ii','tee-yy-yy-äl-ii-koo-koo-ii','tee-uu-uu-äl-jii-koo-koo-ii'],a:0}]},
 {id:'p0d',title:'Sound length changes meaning',type:'mc',items:[
  {q:'"tuuli" tarkoittaa…',o:['wind','fire','customs office','moon'],a:0},
  {q:'"tulli" tarkoittaa…',o:['customs office','fire','wind','ticket'],a:0},
@@ -894,4 +911,13 @@ var COURSE_TASKS = [
  ['t2','A sample of your pronunciation (in Finnish)'],
  ['t3','Discussion about Finnish culture (in English)'],
  ['t4','Interview with a pair (in Finnish)']
+];
+
+var GOLDEN_RULES = [
+ 'Be on time when the lesson starts. Check the time in Tuudo.',
+ 'If you cannot attend the lesson, let the teacher know.',
+ 'During lessons, bring a pencil/pen and a notebook or tablet.',
+ 'Learn how to use dictionaries and the course glossary.',
+ 'If you have questions about studying or course contents, ask the teacher.',
+ 'Be active and stay focused during the lessons.'
 ];

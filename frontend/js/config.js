@@ -1,25 +1,24 @@
 /* ============================================================================
  * config.js — runtime configuration for the Survival Finnish frontend.
  *
- * Edit this file (or override at deploy time) to point the app at your
- * ElevenLabs-backed TTS server. Everything degrades gracefully:
- *
- *   1. If a pre-generated MP3 exists (audio/<hash>.mp3 listed in the
- *      manifest), it is played — no network/API key needed at runtime.
- *   2. Otherwise, if `apiBase` is set, the app asks that backend to
- *      synthesize the phrase with ElevenLabs (and the backend caches it).
- *   3. Otherwise it falls back to the browser's built-in speech synthesis.
+ * Audio degrades gracefully:
+ *   1. Pre-generated MP3 from audio/<hash>.mp3, if listed in manifest.json.
+ *   2. Live ElevenLabs through a backend or the Vercel same-origin /api routes.
+ *   3. Browser speech synthesis as the final offline fallback.
  * ==========================================================================*/
 window.SF_CONFIG = {
-  /* Base URL of the deployed backend (backend/server.js), WITHOUT a trailing
-   * slash. Leave "" to disable the live TTS proxy and rely on pre-generated
-   * audio + browser speech. Example: "https://survival-finnish-api.onrender.com" */
-  apiBase: "",
+  /* "auto" checks the current origin for /api/health and uses /api/tts only
+   * when ELEVENLABS_API_KEY is configured there. Use an explicit backend URL
+   * such as "http://localhost:8787" or "https://example.com" to force a
+   * remote backend. Use "" to disable live TTS entirely. */
+  apiBase: "auto",
 
   /* Directory (relative to index.html) that holds pre-generated MP3s and
-   * their manifest.json. Produced by scripts/pregenerate-audio.mjs. */
+   * manifest.json. Produced by scripts/pregenerate-audio.mjs. */
   audioBase: "audio",
 
-  /* Playback speed hint passed to the browser speech-synthesis fallback. */
-  fallbackRate: 0.9
+  /* Browser speech-synthesis fallback tuning. This only applies after MP3 and
+   * ElevenLabs playback are unavailable. */
+  fallbackRate: 0.86,
+  fallbackPitch: 1.0
 };
