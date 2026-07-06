@@ -1,5 +1,5 @@
 /* ============================================================================
- * utils.js — small shared helpers (DOM, strings, arrays) used app-wide.
+ * utils.js - small shared helpers (DOM, strings, arrays) used app-wide.
  * ==========================================================================*/
 var $ = function (s) { return document.querySelector(s); };
 

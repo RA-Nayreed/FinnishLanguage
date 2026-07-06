@@ -6,9 +6,9 @@
  * each one to  frontend/audio/<hash>.mp3  using ElevenLabs. Writes
  * frontend/audio/manifest.json (the list of available hashes) so the
  * frontend can play the pre-rendered files with no backend and no API key at
- * runtime — useful for a static Vercel deployment.
+ * runtime - useful for a static Vercel deployment.
  *
- * The <hash> is Lingua.hashPhrase(text) — the SAME hash the browser computes
+ * The <hash> is Lingua.hashPhrase(text) - the SAME hash the browser computes
  * for say(text), so a lookup is a simple manifest membership test.
  *
  * Env:
@@ -17,7 +17,7 @@
  *   ELEVENLABS_VOICE_ID  (default Rachel)
  *   ELEVENLABS_MODEL     (default eleven_multilingual_v2)
  *   AUDIO_CONCURRENCY    (default 4)
- *   PREGEN_NUM_MAX       (default 100 — pre-render numbers 0..N)
+ *   PREGEN_NUM_MAX       (default 100 - pre-render numbers 0..N)
  *
  * Usage:  node scripts/pregenerate-audio.mjs
  * ==========================================================================*/
@@ -36,7 +36,10 @@ const AUDIO_DIR = path.join(FRONTEND, 'audio');
 const Lingua = require(path.join(FRONTEND, 'shared', 'lingua.js'));
 const { hashPhrase, numFi, clockFi } = Lingua;
 
-const API_KEY = process.env.ELEVENLABS_API_KEY || '';
+const PLACEHOLDER_KEYS = new Set(['sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362']);
+const RAW_API_KEY = process.env.ELEVENLABS_API_KEY || '';
+const API_KEY = PLACEHOLDER_KEYS.has(String(RAW_API_KEY).trim()) ? '' : String(RAW_API_KEY).trim();
+const KEY_STATUS = API_KEY ? 'configured' : (RAW_API_KEY ? 'placeholder_key' : 'missing_key');
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY || 4);
@@ -97,7 +100,9 @@ async function main() {
   console.log(`Collected ${phrases.length} unique Finnish phrases.`);
 
   if (!API_KEY) {
-    console.warn('! ELEVENLABS_API_KEY not set — writing an empty manifest.');
+    console.warn(KEY_STATUS === 'placeholder_key'
+      ? '! ELEVENLABS_API_KEY is the checked-in fake placeholder, writing an empty manifest.'
+      : '! ELEVENLABS_API_KEY not set, writing an empty manifest.');
     console.warn('  The site will fall back to the browser voice / live backend.');
     fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
     return;

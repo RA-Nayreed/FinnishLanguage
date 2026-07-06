@@ -1,10 +1,10 @@
 /* ============================================================================
- * audio.js — Finnish text-to-speech for the frontend.
+ * audio.js - Finnish text-to-speech for the frontend.
  *
  * Three-tier playback (best available wins):
  *   1) pre-generated MP3  audio/<hash>.mp3   (listed in audio/manifest.json)
  *   2) live ElevenLabs via /api/tts or a configured backend
- *   3) browser SpeechSynthesis (fi-FI)       — final fallback
+ *   3) browser SpeechSynthesis (fi-FI)       - final fallback
  * ==========================================================================*/
 (function () {
   'use strict';
@@ -22,14 +22,17 @@
   var apiCandidate = '';
   var API = '';
   var audioEl = null;
+  var backendStatus = 'disabled';
   var cache = {};
 
   if (rawApiBase === 'auto') {
     backendMode = 'auto';
     apiCandidate = /^https?:$/i.test(window.location.protocol) ? window.location.origin : '';
+    backendStatus = apiCandidate ? 'pending' : 'disabled';
   } else if (rawApiBase) {
     backendMode = 'explicit';
-    API = rawApiBase.replace(/\/+$/, '');
+    apiCandidate = rawApiBase.replace(/\/+$/, '');
+    backendStatus = apiCandidate ? 'pending' : 'disabled';
   }
 
   /* ---- browser voice selection ------------------------------------------*/
@@ -132,17 +135,22 @@
 
   /* ---- backend / Vercel API discovery -----------------------------------*/
   function probeBackend() {
-    if (backendMode !== 'auto' || !apiCandidate) return Promise.resolve(false);
+    if (!apiCandidate || (backendMode !== 'auto' && backendMode !== 'explicit')) {
+      backendStatus = 'disabled';
+      return Promise.resolve(false);
+    }
     return fetch(apiCandidate + '/api/health', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.ok && data.keyConfigured) {
           API = apiCandidate;
+          backendStatus = 'ready';
           return true;
         }
+        backendStatus = data && data.keyStatus ? data.keyStatus : 'unconfigured';
         return false;
       })
-      .catch(function () { return false; });
+      .catch(function () { backendStatus = 'unreachable'; return false; });
   }
 
   function backendSay(text, hash) {
@@ -200,6 +208,7 @@
       manifestLoaded: manifestLoaded,
       pregeneratedPhrases: manifest.size,
       backendMode: backendMode,
+      backendStatus: backendStatus,
       apiBase: API,
       browserSpeech: hasSpeech,
       browserVoice: fiVoice ? { name:fiVoice.name, lang:fiVoice.lang, score:voiceScore(fiVoice) } : null

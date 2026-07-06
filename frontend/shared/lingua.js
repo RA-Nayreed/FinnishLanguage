@@ -1,5 +1,5 @@
 /* ============================================================================
- * lingua.js — pure, dependency-free Finnish language helpers.
+ * lingua.js - pure, dependency-free Finnish language helpers.
  *
  * This file is shared by the browser frontend (loaded as a classic <script>,
  * exposing globals) AND by the Node build scripts (loaded via require()).

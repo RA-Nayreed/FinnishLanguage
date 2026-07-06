@@ -90,12 +90,13 @@ intentionally fake. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
 To generate static audio locally:
 
 ```bash
-export ELEVENLABS_API_KEY=sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362
+export ELEVENLABS_API_KEY=sk_real_elevenlabs_key_here
 node scripts/pregenerate-audio.mjs
 ```
 
-Without `ELEVENLABS_API_KEY`, the script writes an empty manifest and the
-frontend still works through backend or browser fallback audio.
+Without a real `ELEVENLABS_API_KEY`, or when the checked-in fake placeholder is
+used, the script writes an empty manifest and the frontend still works through
+backend or browser fallback audio.
 
 ## Deploy Frontend With Vercel
 

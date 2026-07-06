@@ -1,3 +1,4 @@
+const { getApiKey, isPlaceholderKey } = require('./elevenlabs');
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
 const DEFAULT_MODEL = 'eleven_multilingual_v2';
 const MAX_TEXT_LENGTH = 600;
@@ -33,8 +34,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) return res.status(501).json({ error: 'elevenlabs_key_missing' });
+  const apiKey = getApiKey();
+  if (isPlaceholderKey(apiKey)) return res.status(501).json({ error: apiKey ? 'elevenlabs_placeholder_key' : 'elevenlabs_key_missing' });
 
   const query = getQuery(req);
   const body = req.method === 'POST' ? await readBody(req) : {};

@@ -1,5 +1,5 @@
 /* ============================================================================
- * app.js — state, storage, exercise runner, flashcards, views, navigation.
+ * app.js - state, storage, exercise runner, flashcards, views, navigation.
  *
  * Depends on: utils.js, shared/lingua.js, audio.js, data.js
  * ==========================================================================*/
@@ -65,7 +65,7 @@ function genDayItem() {
   var opts = [{ txt:ans, ok:true }];
   var pool = shuffle(DAYS);
   for (var i = 0; i < pool.length; i++) { if (pool[i] !== ans && opts.length < 4) opts.push({ txt:pool[i], ok:false }); }
-  return { t:'mc', q:f[0] + ' <span class="caption mute">(oikea kalenteri — the real calendar!)</span>', opts:shuffle(opts) };
+  return { t:'mc', q:f[0] + ' <span class="caption mute">(oikea kalenteri - the real calendar!)</span>', opts:shuffle(opts) };
 }
 function expandGen(g) { return g === 'number' ? genNumItem() : g === 'clock' ? genClockItem() : genDayItem(); }
 
@@ -77,7 +77,7 @@ function prepType(it) { return { t:'type', q:it.q, a:it.a, show:it.show, saySrc:
 function prepListen(it) {
   var pick = Math.random() < 0.5 ? 0 : 1, w = it.pair[pick], o = it.pair[1 - pick];
   if (ttsOK) return { t:'mc', listen:w[0], q:'Kuuntele ja valitse sana, jonka kuulet. <span class="caption mute">(listen &amp; pick the word you hear)</span>',
-    opts:shuffle([{ txt:w[0] + ' — ' + w[1], ok:true }, { txt:o[0] + ' — ' + o[1], ok:false }]) };
+    opts:shuffle([{ txt:w[0] + ' - ' + w[1], ok:true }, { txt:o[0] + ' - ' + o[1], ok:false }]) };
   return { t:'mc', q:'Which Finnish word means <b>“' + esc(w[1]) + '”</b>?', opts:shuffle([{ txt:w[0], ok:true }, { txt:o[0], ok:false }]) };
 }
 function prepQuizItem(it) {
@@ -103,7 +103,7 @@ function startPractice(mid, exId) {
 }
 function startQuiz(mid) {
   var m = MODULES.find(function (x) { return x.id === mid; });
-  RUN = { kind:'quiz', modId:mid, exId:null, title:'Moduulitesti — module quiz', intro:'10 questions · pass at 70 %',
+  RUN = { kind:'quiz', modId:mid, exId:null, title:'Moduulitesti - module quiz', intro:'10 questions · pass at 70 %',
     items:sample(m.quiz, Math.min(10, m.quiz.length)).map(prepQuizItem), idx:0, score:0, answered:false };
   renderRun();
 }
@@ -112,7 +112,7 @@ function startExam() {
   MODULES.forEach(function (m) { pool = pool.concat(m.quiz.map(function (x) { return Object.assign({}, x, { _m:m.num }); })); });
   var items = sample(pool, 21).map(prepQuizItem);
   items.push(genNumItem(), genClockItem(), genClockItem(), genDayItem());
-  RUN = { kind:'exam', modId:null, exId:null, title:'Loppukoe — final exam', intro:'25 questions from the whole booklet · pass at 80 %',
+  RUN = { kind:'exam', modId:null, exId:null, title:'Loppukoe - final exam', intro:'25 questions from the whole booklet · pass at 80 %',
     items:shuffle(items), idx:0, score:0, answered:false };
   renderRun();
 }
@@ -131,7 +131,7 @@ function renderRun() {
   var inner = '';
   if (it.t === 'mc') {
     inner = '<div class="opts">' + it.opts.map(function (o, i) { return '<button class="opt" id="opt' + i + '" onclick="ansMC(' + i + ')">' + o.txt + '</button>'; }).join('') + '</div>';
-    if (it.listen) inner = '<div style="margin-bottom:14px"><button class="btn btn-secondary btn-sm" onclick="say(RUN.items[RUN.idx].listen)">🔊 Kuuntele — listen</button></div>' + inner;
+    if (it.listen) inner = '<div style="margin-bottom:14px"><button class="btn btn-secondary btn-sm" onclick="say(RUN.items[RUN.idx].listen)">🔊 Kuuntele - listen</button></div>' + inner;
   } else {
     inner = '<div class="type-row"><input class="pill-input" id="typeIn" autocomplete="off" autocapitalize="off" onkeydown="if(event.key===\'Enter\')ansType()" placeholder="Kirjoita vastaus…"><button class="btn btn-primary" onclick="ansType()">Tarkista</button></div>';
   }
@@ -159,7 +159,7 @@ function ansMC(i) {
   if (ok) R.score++;
   var right = it.opts.find(function (o) { return o.ok; }).txt;
   $('#fb').innerHTML = '<div class="feedback"><span class="dot ' + (ok ? 'ok' : 'no') + '"></span><span>' +
-    (ok ? 'Oikein!' : 'Ei ihan — oikea vastaus: <b>' + right + '</b>') + (it.saySrc ? ' ' + spk(it.saySrc) : '') + '</span></div>';
+    (ok ? 'Oikein!' : 'Ei ihan - oikea vastaus: <b>' + right + '</b>') + (it.saySrc ? ' ' + spk(it.saySrc) : '') + '</span></div>';
   $('#nextRow').classList.remove('hidden');
 }
 function ansType() {
@@ -181,15 +181,15 @@ function renderRunDone() {
   if (R.kind === 'prac') {
     passed = pct >= 80;
     if (passed && (!S.prac[R.exId] || pct > S.prac[R.exId])) { S.prac[R.exId] = pct; save(); }
-    passLine = passed ? 'Harjoitus suoritettu ✓ (≥ 80 %)' : 'Tarvitset 80 % — yritä uudestaan!';
+    passLine = passed ? 'Harjoitus suoritettu ✓ (≥ 80 %)' : 'Tarvitset 80 % - yritä uudestaan!';
   } else if (R.kind === 'quiz') {
     passed = pct >= 70;
     if (!S.quiz[R.modId] || pct > S.quiz[R.modId]) { S.quiz[R.modId] = pct; save(); }
-    passLine = passed ? 'Testi läpi ✓ (≥ 70 %)' : 'Raja on 70 % — kertaa ja yritä uudestaan!';
+    passLine = passed ? 'Testi läpi ✓ (≥ 70 %)' : 'Raja on 70 % - kertaa ja yritä uudestaan!';
   } else {
     passed = pct >= 80;
     if (pct > S.exam) { S.exam = pct; save(); }
-    passLine = passed ? 'Loppukoe läpi — onneksi olkoon! 🎉' : 'Raja on 80 % — kertaa moduulit ja yritä uudestaan!';
+    passLine = passed ? 'Loppukoe läpi - onneksi olkoon! 🎉' : 'Raja on 80 % - kertaa moduulit ja yritä uudestaan!';
   }
   var retry = R.kind === 'prac' ? "startPractice('" + R.modId + "','" + R.exId + "')" : R.kind === 'quiz' ? "startQuiz('" + R.modId + "')" : 'startExam()';
   var back = R.kind === 'exam' ? "go('home')" : "go('" + R.modId + "','" + (R.kind === 'quiz' ? 'quiz' : 'practice') + "')";
@@ -224,7 +224,7 @@ function renderMatch() {
     '<button class="btn btn-secondary btn-sm" onclick="go(\'' + M.modId + '\',\'practice\')">← Takaisin</button>' +
     '<div class="spacer-lg"></div>' +
     '<h3 class="heading-lg">' + M.title + '</h3>' +
-    '<p class="body-sm" style="margin-top:4px">Yhdistä parit — match the pairs · round ' + (M.round + 1) + '/' + M.rounds.length + '</p>' +
+    '<p class="body-sm" style="margin-top:4px">Yhdistä parit - match the pairs · round ' + (M.round + 1) + '/' + M.rounds.length + '</p>' +
     '<div class="ex-card">' +
       '<div class="ex-meta"><span>parit ' + M.ok + ' / ' + M.total + '</span><span>virheet ' + M.miss + '</span></div>' +
       '<div class="match-wrap">' +
@@ -263,7 +263,7 @@ function matchDone() {
     '<div class="ex-card" style="text-align:center;padding:40px 24px;margin-top:24px">' +
       '<div class="flash-word">' + pct + ' %</div>' +
       '<p class="body-sm" style="margin-top:8px">' + M.total + ' paria · ' + M.miss + ' virhettä</p>' +
-      '<div class="feedback" style="justify-content:center"><span class="dot ' + (passed ? 'ok' : 'no') + '"></span><span>' + (passed ? 'Harjoitus suoritettu ✓' : 'Alle 80 % tarkkuus — yritä uudestaan!') + '</span></div>' +
+      '<div class="feedback" style="justify-content:center"><span class="dot ' + (passed ? 'ok' : 'no') + '"></span><span>' + (passed ? 'Harjoitus suoritettu ✓' : 'Alle 80 % tarkkuus - yritä uudestaan!') + '</span></div>' +
       '<div class="flash-actions">' +
         '<button class="btn btn-primary" onclick="startPractice(\'' + M.modId + '\',\'' + M.exId + '\')">Uudestaan</button>' +
         '<button class="btn btn-secondary" onclick="go(\'' + M.modId + '\',\'practice\')">Valmis</button>' +
@@ -294,7 +294,7 @@ function renderCards() {
       '</div></div>';
   });
   $('#app').innerHTML = '<div class="col" style="margin-top:48px">' +
-    '<h2 class="display-lg">Sanasto — flashcards</h2>' +
+    '<h2 class="display-lg">Sanasto - flashcards</h2>' +
     '<p class="body-md" style="margin-top:8px">Every word from the booklet as spaced-repetition cards. <b>En osannut</b> sends a card back to box 1, <b>Osasin</b> moves it up. Box 3 = you know it.</p>' +
     '<div class="spacer-lg"></div>' + rows + '</div>';
   updateNav();
@@ -401,13 +401,13 @@ function renderHome() {
     '<div class="faq-row"><h5 class="heading-sm">Learning outcomes</h5><p>By the end of the course, you can understand and use very common everyday expressions and phrases, locate information in simple texts and messages, and recognize basic features of Finnish language and communication styles.</p></div>' +
     '<div class="faq-row"><h5 class="heading-sm">Mode, workload and assessment</h5><p>Survival Finnish (900017Y), 2 ECTS, level A1.1. The booklet describes 12 x 2 h contact lessons, a 2 h written exam, and 24 h of self-study in Moodle. Assessment is pass/fail and is based on active participation, homework assignments, and the written exam.</p></div>' +
     '<div class="faq-row"><h5 class="heading-sm">Course content</h5><p>Everyday phrases, greetings, thanking and apologizing, introductions and basic personal information, numbers, time expressions, food and drink, asking prices, personal pronouns and possessive forms, affirmative/negative/question sentences, verb conjugation, partitive singular, and basic local cases for answering missä.</p></div>' +
-    '<div class="faq-row"><h5 class="heading-sm">Kultaiset säännöt — golden rules</h5><div class="vgrid" style="grid-template-columns:1fr">' + golden + '</div></div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Kultaiset säännöt - golden rules</h5><div class="vgrid" style="grid-template-columns:1fr">' + golden + '</div></div>' +
     '<div class="faq-row"><h5 class="heading-sm">Pronunciation rule</h5><p>Finnish is pronounced exactly as it is written: one letter, one sound. Stress is always on the first syllable, and sound length (a vs aa, k vs kk) changes meaning, so listen and pronounce carefully.</p></div>' +
-    '<div class="faq-row"><h5 class="heading-sm">Pakolliset Moodle-tehtävät — obligatory tasks</h5>' + tasks + '</div>' +
+    '<div class="faq-row"><h5 class="heading-sm">Pakolliset Moodle-tehtävät - obligatory tasks</h5>' + tasks + '</div>' +
   '</div>' +
   '<div class="col section-gap">' +
     '<div class="card-dark">' +
-      '<h3 class="heading-lg" style="color:var(--on-dark)">Loppukoe — final exam</h3>' +
+      '<h3 class="heading-lg" style="color:var(--on-dark)">Loppukoe - final exam</h3>' +
       '<p class="body-sm" style="margin-top:8px">25 questions sampled from the whole booklet, including live number and clock questions. Pass at 80 %.' + (S.exam ? ' Your best: <b style="color:var(--on-dark)">' + S.exam + ' %</b>.' : '') + '</p>' +
       '<div style="margin-top:20px"><button class="btn btn-on-dark" onclick="startExam()">Aloita loppukoe</button></div>' +
     '</div>' +
@@ -438,7 +438,7 @@ function renderModule(mid, tab) {
       var best = S.prac[ex.id];
       return '<div class="ex-card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<div><h5 class="heading-sm">' + ex.title + '</h5>' +
-        '<span class="caption">' + (ex.type === 'match' ? ex.pairs.length + ' paria' : ex.items ? ex.items.length + ' kysymystä' : 'generaattori — endless practice') + (best ? ' · paras ' + best + ' %' : '') + '</span></div>' +
+        '<span class="caption">' + (ex.type === 'match' ? ex.pairs.length + ' paria' : ex.items ? ex.items.length + ' kysymystä' : 'generaattori - endless practice') + (best ? ' · paras ' + best + ' %' : '') + '</span></div>' +
         '<button class="btn ' + (best ? 'btn-secondary' : 'btn-primary') + ' btn-sm" onclick="startPractice(\'' + mid + '\',\'' + ex.id + '\')">' + (best ? 'Uudestaan ✓' : 'Aloita') + '</button>' +
       '</div>';
     }).join('');
@@ -475,7 +475,7 @@ function renderExamView() {
   VIEW = 'exam';
   $('#app').innerHTML = '<div class="col" style="margin-top:48px">' +
     '<h2 class="display-lg">Loppukoe</h2>' +
-    '<p class="body-md" style="margin-top:8px">25 questions from all seven modules — vocabulary, grammar, dialogues, plus live number and clock questions. Pass at 80 %.' + (S.exam ? ' Your best result so far: <b>' + S.exam + ' %</b>.' : '') + '</p>' +
+    '<p class="body-md" style="margin-top:8px">25 questions from all seven modules - vocabulary, grammar, dialogues, plus live number and clock questions. Pass at 80 %.' + (S.exam ? ' Your best result so far: <b>' + S.exam + ' %</b>.' : '') + '</p>' +
     '<div class="spacer-lg"></div>' +
     '<div class="card-dark">' +
       '<h3 class="heading-lg" style="color:var(--on-dark)">Oletko valmis?</h3>' +

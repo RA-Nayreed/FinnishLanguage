@@ -1,5 +1,5 @@
 /* ============================================================================
- * config.js — runtime configuration for the Survival Finnish frontend.
+ * config.js - runtime configuration for the Survival Finnish frontend.
  *
  * Audio degrades gracefully:
  *   1. Pre-generated MP3 from audio/<hash>.mp3, if listed in manifest.json.

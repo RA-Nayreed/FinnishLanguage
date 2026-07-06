@@ -1,4 +1,4 @@
-# Survival Finnish — backend (ElevenLabs TTS proxy)
+# Survival Finnish - backend (ElevenLabs TTS proxy)
 
 A small Express server that sits in front of the ElevenLabs text-to-speech API.
 The browser asks this server for Finnish audio; the server synthesizes it (or
@@ -29,7 +29,7 @@ npm start                 # http://localhost:8787
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `ELEVENLABS_API_KEY` | — | required for synthesis (else `/api/tts` → 501) |
+| `ELEVENLABS_API_KEY` | - | required for synthesis (else `/api/tts` → 501) |
 | `ELEVENLABS_VOICE_ID` | `21m00Tcm4TlvDq8ikWAM` (Rachel) | any ElevenLabs voice id |
 | `ELEVENLABS_MODEL` | `eleven_multilingual_v2` | supports Finnish |
 | `PORT` | `8787` | |

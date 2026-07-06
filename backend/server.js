@@ -1,5 +1,5 @@
 /* ============================================================================
- * server.js — Survival Finnish TTS backend.
+ * server.js - Survival Finnish TTS backend.
  *
  * A thin, cache-first proxy in front of the ElevenLabs text-to-speech API.
  * The browser never sees your API key: it asks this server for audio, the
@@ -12,7 +12,7 @@
  *
  * Config via environment (see .env.example):
  *   ELEVENLABS_API_KEY   (required for live synthesis)
- *   ELEVENLABS_VOICE_ID  (default: Rachel — multilingual capable)
+ *   ELEVENLABS_VOICE_ID  (default: Rachel - multilingual capable)
  *   ELEVENLABS_MODEL     (default: eleven_multilingual_v2, supports Finnish)
  *   PORT                 (default: 8787)
  *   CACHE_DIR            (default: ./cache)
@@ -28,8 +28,17 @@ import 'dotenv/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const PLACEHOLDER_KEYS = new Set(['sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362']);
+
+function normalizeApiKey(value) {
+  const key = String(value || '').trim();
+  return PLACEHOLDER_KEYS.has(key) ? '' : key;
+}
+
 const PORT = process.env.PORT || 8787;
-const API_KEY = process.env.ELEVENLABS_API_KEY || '';
+const RAW_API_KEY = process.env.ELEVENLABS_API_KEY || '';
+const API_KEY = normalizeApiKey(RAW_API_KEY);
+const KEY_STATUS = API_KEY ? 'configured' : (RAW_API_KEY ? 'placeholder_key' : 'missing_key');
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // "Rachel"
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 const CACHE_DIR = process.env.CACHE_DIR || path.join(__dirname, 'cache');
@@ -49,7 +58,9 @@ function cachePath(key) { return path.join(CACHE_DIR, key + '.mp3'); }
 
 async function synthesize(text, voice) {
   if (!API_KEY) {
-    const err = new Error('ELEVENLABS_API_KEY is not configured on the server.');
+    const err = new Error(KEY_STATUS === 'placeholder_key'
+      ? 'ELEVENLABS_API_KEY is the checked-in fake placeholder. Set a real ElevenLabs key.'
+      : 'ELEVENLABS_API_KEY is not configured on the server.');
     err.status = 501;
     throw err;
   }
@@ -96,11 +107,11 @@ function sendAudio(res, buf) {
 app.get('/api/health', (_req, res) => {
   let cached = 0;
   try { cached = fs.readdirSync(CACHE_DIR).filter((f) => f.endsWith('.mp3')).length; } catch {}
-  res.json({ ok: true, keyConfigured: !!API_KEY, voice: VOICE_ID, model: MODEL, cached });
+  res.json({ ok: true, keyConfigured: !!API_KEY, keyStatus: KEY_STATUS, voice: VOICE_ID, model: MODEL, cached });
 });
 
 app.get('/api/voices', async (_req, res) => {
-  if (!API_KEY) return res.status(501).json({ error: 'ELEVENLABS_API_KEY not configured' });
+  if (!API_KEY) return res.status(501).json({ error: KEY_STATUS === 'placeholder_key' ? 'elevenlabs_placeholder_key' : 'elevenlabs_key_missing' });
   try {
     const r = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': API_KEY } });
     res.status(r.status).json(await r.json());
@@ -132,6 +143,6 @@ if (fs.existsSync(FRONTEND_DIR)) {
 
 app.listen(PORT, () => {
   console.log(`Survival Finnish TTS backend on :${PORT}`);
-  console.log(`  voice=${VOICE_ID} model=${MODEL} key=${API_KEY ? 'set' : 'MISSING'}`);
+  console.log(`  voice=${VOICE_ID} model=${MODEL} key=${KEY_STATUS}`);
   console.log(`  cache=${CACHE_DIR}`);
 });
