@@ -1,5 +1,5 @@
 const { getApiKey, isPlaceholderKey } = require('./elevenlabs');
-const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 const DEFAULT_MODEL = 'eleven_multilingual_v2';
 const MAX_TEXT_LENGTH = 600;
 

@@ -14,7 +14,7 @@
  * Env:
  *   ELEVENLABS_API_KEY   (required; without it the script writes an empty
  *                         manifest and exits 0 so the site still builds)
- *   ELEVENLABS_VOICE_ID  (default Rachel)
+ *   ELEVENLABS_VOICE_ID  (default George)
  *   ELEVENLABS_MODEL     (default eleven_multilingual_v2)
  *   AUDIO_CONCURRENCY    (default 4)
  *   PREGEN_NUM_MAX       (default 100 - pre-render numbers 0..N)
@@ -47,7 +47,7 @@ const RAW_API_KEY_TRIMMED = String(RAW_API_KEY).trim();
 const IS_PLACEHOLDER_KEY = !RAW_API_KEY_TRIMMED || PLACEHOLDER_KEYS.has(RAW_API_KEY_TRIMMED) || PLACEHOLDER_PATTERN.test(RAW_API_KEY_TRIMMED);
 const API_KEY = IS_PLACEHOLDER_KEY ? '' : RAW_API_KEY_TRIMMED;
 const KEY_STATUS = API_KEY ? 'configured' : (RAW_API_KEY ? 'placeholder_key' : 'missing_key');
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY || 4);
 const NUM_MAX = Number(process.env.PREGEN_NUM_MAX || 100);
@@ -120,6 +120,14 @@ async function synth(text) {
 /* ---- 3. drive it ------------------------------------------------------- */
 async function main() {
   fs.mkdirSync(AUDIO_DIR, { recursive: true });
+
+  if (process.env.VERCEL && process.env.PREGENERATE_AUDIO !== 'true') {
+    console.warn('! PREGENERATE_AUDIO is not true, writing an empty manifest.');
+    console.warn('  Vercel will use live /api/tts audio instead of build-time MP3 generation.');
+    fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
+    return;
+  }
+
   const phrases = collectPhrases();
   console.log(`Collected ${phrases.length} unique Finnish phrases.`);
 

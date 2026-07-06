@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
   const apiKey = getApiKey();
   if (isPlaceholderKey(apiKey)) return res.status(501).json({ error: apiKey ? 'elevenlabs_placeholder_key' : 'elevenlabs_key_missing' });
 
-  const upstream = await fetch('https://api.elevenlabs.io/v1/voices', {
+  const upstream = await fetch('https://api.elevenlabs.io/v2/voices', {
     headers: { 'xi-api-key': apiKey, 'Accept': 'application/json' }
   });
   const text = await upstream.text();

@@ -12,7 +12,7 @@
  *
  * Config via environment (see .env.example):
  *   ELEVENLABS_API_KEY   (required for live synthesis)
- *   ELEVENLABS_VOICE_ID  (default: Rachel - multilingual capable)
+ *   ELEVENLABS_VOICE_ID  (default: George - multilingual capable)
  *   ELEVENLABS_MODEL     (default: eleven_multilingual_v2, supports Finnish)
  *   PORT                 (default: 8787)
  *   CACHE_DIR            (default: ./cache)
@@ -49,7 +49,7 @@ const PORT = process.env.PORT || 8787;
 const RAW_API_KEY = process.env.ELEVENLABS_API_KEY || '';
 const API_KEY = normalizeApiKey(RAW_API_KEY);
 const KEY_STATUS = API_KEY ? 'configured' : (RAW_API_KEY ? 'placeholder_key' : 'missing_key');
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // "Rachel"
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb'; // "George"
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 const CACHE_DIR = process.env.CACHE_DIR || path.join(__dirname, 'cache');
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
@@ -123,7 +123,7 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/voices', async (_req, res) => {
   if (!API_KEY) return res.status(501).json({ error: KEY_STATUS === 'placeholder_key' ? 'elevenlabs_placeholder_key' : 'elevenlabs_key_missing' });
   try {
-    const r = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': API_KEY } });
+    const r = await fetch('https://api.elevenlabs.io/v2/voices', { headers: { 'xi-api-key': API_KEY } });
     res.status(r.status).json(await r.json());
   } catch (e) {
     res.status(502).json({ error: String(e.message || e) });

@@ -30,7 +30,7 @@ npm start                 # http://localhost:8787
 | Variable | Default | Notes |
 |----------|---------|-------|
 | `ELEVENLABS_API_KEY` | - | required for synthesis (else `/api/tts` → 501) |
-| `ELEVENLABS_VOICE_ID` | `21m00Tcm4TlvDq8ikWAM` (Rachel) | any ElevenLabs voice id |
+| `ELEVENLABS_VOICE_ID` | `JBFqnCBsd6RMkjVDRZzb` (George) | any ElevenLabs voice id |
 | `ELEVENLABS_MODEL` | `eleven_multilingual_v2` | supports Finnish |
 | `PORT` | `8787` | |
 | `CACHE_DIR` | `./cache` | on-disk MP3 cache |

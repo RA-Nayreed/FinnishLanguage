@@ -13,8 +13,8 @@ This repository is a personal study tool.
 
 - `frontend/` is a static HTML/CSS/JavaScript app.
 - `backend/` is an optional Node/Express ElevenLabs text-to-speech proxy.
-- `scripts/pregenerate-audio.mjs` can render known Finnish phrases into MP3
-  files for static hosting.
+- `scripts/pregenerate-audio.mjs` can optionally render known Finnish phrases
+  into MP3 files for static hosting.
 - `vercel.json` deploys the static frontend directory on Vercel.
 - `api/` contains Vercel serverless routes for optional ElevenLabs speech.
 
@@ -106,6 +106,10 @@ The root `vercel.json` is configured for the static frontend:
 - Build command: `node scripts/pregenerate-audio.mjs`
 - Output directory: `frontend`
 - Serverless API routes: `api/health.js`, `api/tts.js`, `api/voices.js`
+
+On Vercel, the build writes an empty audio manifest by default and uses live
+`/api/tts` playback. Set `PREGENERATE_AUDIO=true` only if you intentionally
+want the build to spend ElevenLabs quota generating static MP3 files.
 
 Import the GitHub repository into Vercel and keep the production branch set to
 `main`. Add a real `ELEVENLABS_API_KEY` as a Vercel environment variable for
