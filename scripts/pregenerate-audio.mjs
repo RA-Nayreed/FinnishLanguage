@@ -36,9 +36,16 @@ const AUDIO_DIR = path.join(FRONTEND, 'audio');
 const Lingua = require(path.join(FRONTEND, 'shared', 'lingua.js'));
 const { hashPhrase, numFi, clockFi } = Lingua;
 
-const PLACEHOLDER_KEYS = new Set(['sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362']);
+const PLACEHOLDER_KEYS = new Set([
+  'sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362',
+  'sk_real_elevenlabs_key_here',
+  'your_real_elevenlabs_key_here'
+]);
+const PLACEHOLDER_PATTERN = /(placeholder|example|changeme|your[_-]?real|real[_-]?elevenlabs[_-]?key[_-]?here)/i;
 const RAW_API_KEY = process.env.ELEVENLABS_API_KEY || '';
-const API_KEY = PLACEHOLDER_KEYS.has(String(RAW_API_KEY).trim()) ? '' : String(RAW_API_KEY).trim();
+const RAW_API_KEY_TRIMMED = String(RAW_API_KEY).trim();
+const IS_PLACEHOLDER_KEY = !RAW_API_KEY_TRIMMED || PLACEHOLDER_KEYS.has(RAW_API_KEY_TRIMMED) || PLACEHOLDER_PATTERN.test(RAW_API_KEY_TRIMMED);
+const API_KEY = IS_PLACEHOLDER_KEY ? '' : RAW_API_KEY_TRIMMED;
 const KEY_STATUS = API_KEY ? 'configured' : (RAW_API_KEY ? 'placeholder_key' : 'missing_key');
 const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
@@ -78,6 +85,23 @@ function collectPhrases() {
 }
 
 /* ---- 2. synthesize with ElevenLabs ------------------------------------- */
+async function validateApiKey() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/user', {
+      headers: { 'xi-api-key': API_KEY, Accept: 'application/json' },
+      signal: controller.signal
+    });
+    if (!res.ok) return { valid: false, reason: `invalid_key_${res.status}` };
+    return { valid: true };
+  } catch (e) {
+    return { valid: false, reason: e.name === 'AbortError' ? 'validation_timeout' : 'validation_failed' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function synth(text) {
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
   const res = await fetch(url, {
@@ -101,9 +125,17 @@ async function main() {
 
   if (!API_KEY) {
     console.warn(KEY_STATUS === 'placeholder_key'
-      ? '! ELEVENLABS_API_KEY is the checked-in fake placeholder, writing an empty manifest.'
+      ? '! ELEVENLABS_API_KEY is a placeholder value, writing an empty manifest.'
       : '! ELEVENLABS_API_KEY not set, writing an empty manifest.');
     console.warn('  The site will fall back to the browser voice / live backend.');
+    fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
+    return;
+  }
+
+  const validation = await validateApiKey();
+  if (!validation.valid) {
+    console.warn(`! ELEVENLABS_API_KEY was rejected (${validation.reason}), writing an empty manifest.`);
+    console.warn('  Set a real ElevenLabs key to generate MP3 files.');
     fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
     return;
   }

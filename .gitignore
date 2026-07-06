@@ -21,3 +21,6 @@ frontend/audio/manifest.json
 
 # local source booklet export
 SB.MD
+.env
+.env.local
+.env.*.local

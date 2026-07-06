@@ -28,11 +28,21 @@ import 'dotenv/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const PLACEHOLDER_KEYS = new Set(['sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362']);
+const PLACEHOLDER_KEYS = new Set([
+  'sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362',
+  'sk_real_elevenlabs_key_here',
+  'your_real_elevenlabs_key_here'
+]);
+const PLACEHOLDER_PATTERN = /(placeholder|example|changeme|your[_-]?real|real[_-]?elevenlabs[_-]?key[_-]?here)/i;
+
+function isPlaceholderKey(value) {
+  const key = String(value || '').trim();
+  return !key || PLACEHOLDER_KEYS.has(key) || PLACEHOLDER_PATTERN.test(key);
+}
 
 function normalizeApiKey(value) {
   const key = String(value || '').trim();
-  return PLACEHOLDER_KEYS.has(key) ? '' : key;
+  return isPlaceholderKey(key) ? '' : key;
 }
 
 const PORT = process.env.PORT || 8787;
@@ -59,7 +69,7 @@ function cachePath(key) { return path.join(CACHE_DIR, key + '.mp3'); }
 async function synthesize(text, voice) {
   if (!API_KEY) {
     const err = new Error(KEY_STATUS === 'placeholder_key'
-      ? 'ELEVENLABS_API_KEY is the checked-in fake placeholder. Set a real ElevenLabs key.'
+      ? 'ELEVENLABS_API_KEY is a placeholder value. Set a real ElevenLabs key.'
       : 'ELEVENLABS_API_KEY is not configured on the server.');
     err.status = 501;
     throw err;

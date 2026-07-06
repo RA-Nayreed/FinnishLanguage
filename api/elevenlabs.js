@@ -1,13 +1,17 @@
 const PLACEHOLDER_KEYS = new Set([
-  'sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362'
+  'sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362',
+  'sk_real_elevenlabs_key_here',
+  'your_real_elevenlabs_key_here'
 ]);
+const PLACEHOLDER_PATTERN = /(placeholder|example|changeme|your[_-]?real|real[_-]?elevenlabs[_-]?key[_-]?here)/i;
 
 function getApiKey() {
   return String(process.env.ELEVENLABS_API_KEY || '').trim();
 }
 
 function isPlaceholderKey(key = getApiKey()) {
-  return !key || PLACEHOLDER_KEYS.has(String(key).trim());
+  const value = String(key || '').trim();
+  return !value || PLACEHOLDER_KEYS.has(value) || PLACEHOLDER_PATTERN.test(value);
 }
 
 async function validateApiKey(key = getApiKey()) {
