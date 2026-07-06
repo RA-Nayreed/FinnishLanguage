@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "name": "finnishlanguage",
   "framework": null,
   "buildCommand": "node scripts/pregenerate-audio.mjs",
   "outputDirectory": "frontend",
