@@ -17,4 +17,4 @@ frontend/audio/manifest.json
 .idea/
 
 # local Vercel project link
-.vercel/
+.vercel
