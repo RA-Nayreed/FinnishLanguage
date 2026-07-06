@@ -65,7 +65,9 @@ npm start
 ```
 
 Add `ELEVENLABS_API_KEY` to `backend/.env` before starting the backend. The
-backend serves the frontend and API from `http://localhost:8787`.
+checked-in `.env.example` uses a fake placeholder; replace it with a real
+ElevenLabs key for live speech. The backend serves the frontend and API from
+`http://localhost:8787`.
 
 ## Audio
 
@@ -79,15 +81,16 @@ Speech playback tries these sources in order:
 3. Browser speech synthesis as the final offline fallback.
 
 The browser fallback can sound rough if the user has no Finnish system voice.
-For production-quality speech on Vercel, set `ELEVENLABS_API_KEY` in the Vercel
-project environment. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
+For production-quality speech on Vercel, set a real `ELEVENLABS_API_KEY` in
+the Vercel project environment. The placeholder in this repository is
+intentionally fake. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
 `ELEVENLABS_MODEL`, `ELEVENLABS_STABILITY`, `ELEVENLABS_SIMILARITY_BOOST`,
 `ELEVENLABS_STYLE`, and `ELEVENLABS_SPEAKER_BOOST`.
 
 To generate static audio locally:
 
 ```bash
-export ELEVENLABS_API_KEY=sk_...
+export ELEVENLABS_API_KEY=sk_3767267f32ebbb4522e33d2869d7ae7f934abe292be8f362
 node scripts/pregenerate-audio.mjs
 ```
 
@@ -104,10 +107,11 @@ The root `vercel.json` is configured for the static frontend:
 - Serverless API routes: `api/health.js`, `api/tts.js`, `api/voices.js`
 
 Import the GitHub repository into Vercel and keep the production branch set to
-`main`. Add `ELEVENLABS_API_KEY` as a Vercel environment variable for better
-speech. With the key, the app can synthesize live phrases through `/api/tts` and
-can also pre-generate static MP3 files at build time. Without the key, the app
-still deploys and uses browser fallback audio.
+`main`. Add a real `ELEVENLABS_API_KEY` as a Vercel environment variable for
+better speech; do not use the fake placeholder for production voice. With the
+key, the app can synthesize live phrases through `/api/tts` and can also
+pre-generate static MP3 files at build time. Without the key, the app still
+deploys and uses browser fallback audio.
 
 CLI deployment:
 
