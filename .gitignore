@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+package-lock.json
+
+# backend secrets & cache
+backend/.env
+backend/cache/
+*.log
+
+# generated audio (produced locally or during Vercel builds)
+frontend/audio/*.mp3
+frontend/audio/manifest.json
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# local Vercel project link
+.vercel/

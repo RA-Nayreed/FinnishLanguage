@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Survival Finnish — an interactive A1.1 course built from the University of Oulu booklet (900017Y), with ElevenLabs voice.">
+<title>Survival Finnish — Extended Programme</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%87%AB%F0%9F%87%AE%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<nav class="primary-nav"><div class="nav-inner">
+  <button class="wordmark" onclick="go('home')">Survival&nbsp;Finnish</button>
+  <div class="nav-links" id="navLinks"></div>
+  <span class="nav-progress" id="navProg">0%</span>
+</div></nav>
+
+<main id="app"></main>
+
+<footer class="footer">
+  <div>Survival Finnish · Extended Programme — built from the course booklet 900017Y (University of Oulu, level A1.1)</div>
+  <div class="caption">Booklet © Koskela, Starck, Pohjola-Effe, Isohätälä, Käräjäoja, Sarajärvi, Haapakoski, Niskanen · Study tool for personal use</div>
+</footer>
+
+<!-- configuration first, then shared pure logic, then the audio layer, data and app -->
+<script src="js/config.js"></script>
+<script src="shared/lingua.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
