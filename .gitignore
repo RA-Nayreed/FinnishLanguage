@@ -7,9 +7,7 @@ backend/.env
 backend/cache/
 *.log
 
-# generated audio (produced locally or during Vercel builds)
-frontend/audio/*.mp3
-frontend/audio/manifest.json
+# generated audio is intentionally tracked when freezing the app for static hosting
 
 # OS / editor
 .DS_Store

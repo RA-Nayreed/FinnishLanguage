@@ -12,12 +12,14 @@
  * for say(text), so a lookup is a simple manifest membership test.
  *
  * Env:
- *   ELEVENLABS_API_KEY   (required; without it the script writes an empty
- *                         manifest and exits 0 so the site still builds)
+ *   TTS_API_URL          optional /api/tts URL to render through a deployed API
+ *   ELEVENLABS_API_KEY   optional direct ElevenLabs key when TTS_API_URL is not set
  *   ELEVENLABS_VOICE_ID  (default George)
  *   ELEVENLABS_MODEL     (default eleven_multilingual_v2)
  *   AUDIO_CONCURRENCY    (default 4)
  *   PREGEN_NUM_MAX       (default 100 - pre-render numbers 0..N)
+ *   PREGEN_LIMIT         optional cap for test runs
+ *   AUDIO_OUT_DIR        optional output directory (default frontend/audio)
  *
  * Usage:  node scripts/pregenerate-audio.mjs
  * ==========================================================================*/
@@ -31,7 +33,28 @@ const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const FRONTEND = path.join(ROOT, 'frontend');
-const AUDIO_DIR = path.join(FRONTEND, 'audio');
+
+function loadEnvFile(file) {
+  if (!fs.existsSync(file)) return;
+  const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const idx = trimmed.indexOf('=');
+    const key = trimmed.slice(0, idx).trim();
+    let value = trimmed.slice(idx + 1).trim();
+    if ((value.startsWith('\"') && value.endsWith('\"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (key && process.env[key] == null) process.env[key] = value;
+  }
+}
+
+loadEnvFile(path.join(ROOT, '.env.local'));
+loadEnvFile(path.join(ROOT, '.env'));
+loadEnvFile(path.join(ROOT, 'backend', '.env'));
+
+const AUDIO_DIR = process.env.AUDIO_OUT_DIR ? path.resolve(process.env.AUDIO_OUT_DIR) : path.join(FRONTEND, 'audio');
 
 const Lingua = require(path.join(FRONTEND, 'shared', 'lingua.js'));
 const { hashPhrase, numFi, clockFi } = Lingua;
@@ -42,6 +65,7 @@ const PLACEHOLDER_KEYS = new Set([
   'your_real_elevenlabs_key_here'
 ]);
 const PLACEHOLDER_PATTERN = /(placeholder|example|changeme|your[_-]?real|real[_-]?elevenlabs[_-]?key[_-]?here)/i;
+const TTS_API_URL = String(process.env.TTS_API_URL || '').trim();
 const RAW_API_KEY = process.env.ELEVENLABS_API_KEY || '';
 const RAW_API_KEY_TRIMMED = String(RAW_API_KEY).trim();
 const IS_PLACEHOLDER_KEY = !RAW_API_KEY_TRIMMED || PLACEHOLDER_KEYS.has(RAW_API_KEY_TRIMMED) || PLACEHOLDER_PATTERN.test(RAW_API_KEY_TRIMMED);
@@ -51,6 +75,7 @@ const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
 const CONCURRENCY = Number(process.env.AUDIO_CONCURRENCY || 4);
 const NUM_MAX = Number(process.env.PREGEN_NUM_MAX || 100);
+const PREGEN_LIMIT = Number(process.env.PREGEN_LIMIT || 0);
 
 /* ---- 1. collect every spoken phrase ------------------------------------ */
 function collectPhrases() {
@@ -85,24 +110,15 @@ function collectPhrases() {
 }
 
 /* ---- 2. synthesize with ElevenLabs ------------------------------------- */
-async function validateApiKey() {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4000);
-  try {
-    const res = await fetch('https://api.elevenlabs.io/v1/user', {
-      headers: { 'xi-api-key': API_KEY, Accept: 'application/json' },
-      signal: controller.signal
-    });
-    if (!res.ok) return { valid: false, reason: `invalid_key_${res.status}` };
-    return { valid: true };
-  } catch (e) {
-    return { valid: false, reason: e.name === 'AbortError' ? 'validation_timeout' : 'validation_failed' };
-  } finally {
-    clearTimeout(timeout);
-  }
+async function synthViaApi(text) {
+  const url = new URL(TTS_API_URL);
+  url.searchParams.set('text', text);
+  const res = await fetch(url, { headers: { Accept: 'audio/mpeg' } });
+  if (!res.ok) throw new Error(`TTS API ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
-async function synth(text) {
+async function synthViaElevenLabs(text) {
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
   const res = await fetch(url, {
     method: 'POST',
@@ -115,6 +131,19 @@ async function synth(text) {
   });
   if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`);
   return Buffer.from(await res.arrayBuffer());
+}
+
+async function validateAudioSource() {
+  try {
+    await synth('Hei');
+    return { valid: true };
+  } catch (e) {
+    return { valid: false, reason: String(e.message || e).slice(0, 160) };
+  }
+}
+
+async function synth(text) {
+  return TTS_API_URL ? synthViaApi(text) : synthViaElevenLabs(text);
 }
 
 /* ---- 3. drive it ------------------------------------------------------- */
@@ -131,24 +160,29 @@ async function main() {
   const phrases = collectPhrases();
   console.log(`Collected ${phrases.length} unique Finnish phrases.`);
 
-  if (!API_KEY) {
+  if (!TTS_API_URL && !API_KEY) {
     console.warn(KEY_STATUS === 'placeholder_key'
       ? '! ELEVENLABS_API_KEY is a placeholder value, writing an empty manifest.'
-      : '! ELEVENLABS_API_KEY not set, writing an empty manifest.');
+      : '! No TTS_API_URL or ELEVENLABS_API_KEY set, writing an empty manifest.');
     console.warn('  The site will fall back to the browser voice / live backend.');
     fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
     return;
   }
 
-  const validation = await validateApiKey();
+  console.log(TTS_API_URL ? `Rendering through ${TTS_API_URL}` : `Rendering directly with voice ${VOICE_ID}.`);
+  const validation = await validateAudioSource();
   if (!validation.valid) {
-    console.warn(`! ELEVENLABS_API_KEY was rejected (${validation.reason}), writing an empty manifest.`);
-    console.warn('  Set a real ElevenLabs key to generate MP3 files.');
+    console.warn(`! Audio source was rejected (${validation.reason}), writing an empty manifest.`);
+    console.warn('  Set TTS_API_URL or a real ElevenLabs key to generate MP3 files.');
     fs.writeFileSync(path.join(AUDIO_DIR, 'manifest.json'), '[]');
     return;
   }
 
-  const targets = phrases.map((text) => ({ text, hash: hashPhrase(text), file: '' }));
+  let targets = phrases.map((text) => ({ text, hash: hashPhrase(text), file: '' }));
+  if (PREGEN_LIMIT > 0) {
+    targets = targets.slice(0, PREGEN_LIMIT);
+    console.log(`Limiting this run to ${targets.length} phrase(s).`);
+  }
   targets.forEach((t) => { t.file = path.join(AUDIO_DIR, t.hash + '.mp3'); });
 
   let done = 0, made = 0, skipped = 0, failed = 0;

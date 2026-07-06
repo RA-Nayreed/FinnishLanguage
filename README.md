@@ -87,16 +87,39 @@ intentionally fake. Optional voice tuning variables are `ELEVENLABS_VOICE_ID`,
 `ELEVENLABS_MODEL`, `ELEVENLABS_STABILITY`, `ELEVENLABS_SIMILARITY_BOOST`,
 `ELEVENLABS_STYLE`, and `ELEVENLABS_SPEAKER_BOOST`.
 
-To generate static audio locally:
+To generate static audio locally from the deployed TTS API:
 
 ```bash
-export ELEVENLABS_API_KEY=sk_real_elevenlabs_key_here
-node scripts/pregenerate-audio.mjs
+TTS_API_URL=https://finnishlanguage.vercel.app/api/tts node scripts/pregenerate-audio.mjs
 ```
 
-Without a real `ELEVENLABS_API_KEY`, or when the checked-in fake placeholder is
-used, the script writes an empty manifest and the frontend still works through
+For a small test run that writes outside the repo:
+
+```bash
+AUDIO_OUT_DIR=/tmp/sf-audio-test PREGEN_LIMIT=3 \
+  TTS_API_URL=https://finnishlanguage.vercel.app/api/tts \
+  node scripts/pregenerate-audio.mjs
+```
+
+You can also set `ELEVENLABS_API_KEY` locally and render directly. Without
+`TTS_API_URL` or a real `ELEVENLABS_API_KEY`, or when a placeholder is used,
+the script writes an empty manifest and the frontend still works through
 backend or browser fallback audio.
+
+## Freeze Static Audio
+
+The API can be used as a temporary generator and then removed after the MP3
+library is committed. The safe sequence is:
+
+1. Keep `/api/tts` deployed and working.
+2. Generate files locally with `TTS_API_URL=https://finnishlanguage.vercel.app/api/tts node scripts/pregenerate-audio.mjs`.
+3. Commit `frontend/audio/manifest.json` and `frontend/audio/*.mp3`.
+4. Switch `frontend/js/config.js` to disable live TTS, then remove `api/` and the Vercel `ELEVENLABS_API_KEY`.
+
+The default static set covers fixed course phrases, flashcards, listen drills,
+alphabet audio, clocks, and numbers `0..100`. If you want every number the
+number trainer can currently generate, run with `PREGEN_NUM_MAX=9999`; that
+creates thousands of MP3 files and uses much more ElevenLabs quota.
 
 ## Deploy Frontend With Vercel
 
